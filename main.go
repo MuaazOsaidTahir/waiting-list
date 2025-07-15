@@ -15,7 +15,6 @@ import (
 )
 
 type FormFields struct {
-	Name  string `json:"name"`
 	Email string `json:"email"`
 }
 
@@ -40,23 +39,31 @@ func main() {
 
 		err := json.NewDecoder(r.Body).Decode(&form_fields)
 		if err != nil {
-			http.Error(w, "Invalid input", http.StatusBadRequest)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Invalid Input"})
 			return
 		}
-		if form_fields.Name == "" || form_fields.Email == "" {
-			http.Error(w, "Name and Email are required", http.StatusBadRequest)
+		if form_fields.Email == "" {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusBadRequest)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Email is required"})
 			return
 		}
 		var existing FormFields
 		err = collection.FindOne(context.Background(), map[string]string{"email": form_fields.Email}).Decode(&existing)
 		if err == nil {
-			http.Error(w, "Email already exists", http.StatusConflict)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusConflict)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Email already registered for waiting list"})
 			return
 		}
 
 		_, err = collection.InsertOne(context.Background(), form_fields)
 		if err != nil {
-			http.Error(w, "Failed to save data", http.StatusInternalServerError)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Failed to save data"})
 			return
 		}
 		w.WriteHeader(http.StatusCreated)
