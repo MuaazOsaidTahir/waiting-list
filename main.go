@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -21,6 +22,10 @@ type FormFields struct {
 func main() {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins: []string{"https://whisperly.com", "http://localhost:3000"}, // Use this to allow specific origin hosts
+	}))
+
 	client, err := makeMongoConnection()
 	if err != nil {
 		panic(err)
